@@ -25,7 +25,6 @@ import {
   sidebarToggleInset,
   styles,
 } from './ProjectsSidebar.styles';
-import { ProjectTags } from './ProjectTags';
 import { TagDraft } from './TagDraft';
 
 type ProjectsSidebarProps = {
@@ -261,9 +260,12 @@ export function ProjectsSidebar({
                   fontsLoaded={fontsLoaded}
                   selected={project.id === selectedProjectId}
                   disabled={collapsed}
+                  activeTag={activeTag}
                   onSelect={() => onSelectProject(project.id)}
                   onEdit={() => onEditProject(project)}
                   onAddTag={() => onStartTag(project.id)}
+                  onToggleTag={onToggleTag}
+                  onRemoveTag={(name) => onRemoveTag(project.id, name)}
                   onTogglePinned={() => onTogglePinned(project.id)}
                   onRemove={() => {
                     const removed = onRemoveProject(project.id);
@@ -272,15 +274,6 @@ export function ProjectsSidebar({
                   }}
                 />
               )}
-              <ProjectTags
-                tags={project.tags ?? []}
-                activeTag={activeTag}
-                theme={theme}
-                fontsLoaded={fontsLoaded}
-                disabled={collapsed}
-                onToggle={onToggleTag}
-                onRemove={(name) => onRemoveTag(project.id, name)}
-              />
               {tagProjectId === project.id && (
                 <TagDraft
                   theme={theme}

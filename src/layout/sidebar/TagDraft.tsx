@@ -70,7 +70,7 @@ export function TagDraft({
       return;
     }
     if (!isTagColor(pickedColor)) {
-      setError('Enter a hex color like #7CAF90.');
+      setError(`Enter a hex color like ${tagColors[0].value}.`);
       return;
     }
     if (
@@ -223,7 +223,7 @@ export function TagDraft({
               <TextInput
                 accessibilityLabel="Hex color"
                 value={color}
-                placeholder="#7CAF90"
+                placeholder={tagColors[0].value}
                 maxLength={7}
                 autoCapitalize="characters"
                 submitBehavior="submit"

@@ -20,7 +20,8 @@ import {
   layoutColors,
   type LayoutTheme,
 } from '../../theme/colors';
-import { styles } from './ProjectsSidebar.styles';
+import { ProjectTags } from './ProjectTags';
+import { projectIconSize, styles } from './ProjectsSidebar.styles';
 
 type ProjectRowProps = {
   project: Project;
@@ -28,9 +29,12 @@ type ProjectRowProps = {
   fontsLoaded: boolean;
   selected: boolean;
   disabled: boolean;
+  activeTag?: string;
   onSelect: () => void;
   onEdit: () => void;
   onAddTag: () => void;
+  onToggleTag: (name: string) => void;
+  onRemoveTag: (name: string) => boolean;
   onTogglePinned: () => boolean;
   onRemove: () => boolean;
 };
@@ -45,9 +49,12 @@ export function ProjectRow({
   fontsLoaded,
   selected,
   disabled,
+  activeTag,
   onSelect,
   onEdit,
   onAddTag,
+  onToggleTag,
+  onRemoveTag,
   onTogglePinned,
   onRemove,
 }: ProjectRowProps) {
@@ -59,7 +66,14 @@ export function ProjectRow({
   const cancelRemoveButton = useRef<ComponentRef<typeof Button>>(null);
   const openingTag = useRef(false);
   const { Icon } = projectIcons[project.icon];
+  const tags = project.tags ?? [];
+  const hasTags = tags.length > 0;
   const colors = layoutColors[theme];
+  const rowBackground = selected
+    ? colors.selection
+    : hovered || actionsFocused || menuOpen
+      ? colors.background
+      : colors.sidebar;
   const appearance = styles[theme];
   const focusStyles = buttonFocusStyles(theme);
   const labelStyle = [appearance.text, fontsLoaded && styles.base.bodyFont];
@@ -98,139 +112,167 @@ export function ProjectRow({
   ];
 
   return (
-    <View
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => setHovered(false)}
-      style={[styles.base.projectRow, selected && appearance.selectedRow]}
+    <Popover
+      placement="bottom-end"
+      offset={6}
+      open={menuOpen && !disabled}
+      onOpenChange={(open) => {
+        if (open) openingTag.current = false;
+        setConfirmRemove(false);
+        setSaveFailed(false);
+        setMenuOpen(open);
+      }}
     >
-      <Button
-        size="sm"
-        variant="quiet"
-        disabled={disabled}
-        aria-current={selected ? 'true' : undefined}
-        style={styles.base.projectLink}
-        {...focusStyles}
-        onPress={onSelect}
-      >
-        <Icon size={17} strokeWidth={1.7} color={clay} />
-        <Text numberOfLines={1} style={[styles.base.projectName, labelStyle]}>
-          {project.title}
-        </Text>
-      </Button>
-      {project.pinned && (
-        <Pin size={12} color={colors.selectionInk} aria-hidden />
-      )}
-      <Popover
-        placement="bottom-end"
-        offset={6}
-        open={menuOpen && !disabled}
-        onOpenChange={(open) => {
-          if (open) openingTag.current = false;
-          setConfirmRemove(false);
-          setSaveFailed(false);
-          setMenuOpen(open);
-        }}
-      >
-        <Popover.Trigger asChild>
-          <Button
-            id={projectActionsId(project.id)}
-            aria-label={`Actions for ${project.title}`}
-            disabled={disabled}
-            size="sm"
-            variant="quiet"
-            opacity={hovered || actionsFocused || menuOpen ? 1 : 0}
-            onFocus={() => setActionsFocused(true)}
-            onBlur={() => setActionsFocused(false)}
-            style={styles.base.draftButton}
-            {...focusStyles}
-          >
-            <Ellipsis size={17} color={colors.muted} />
-          </Button>
-        </Popover.Trigger>
-        <Popover.Content
-          onCloseAutoFocus={(event) => {
-            if (openingTag.current) event.cancel();
-          }}
-          style={[styles.base.actionMenu, appearance.iconMenu]}
+      <Popover.Anchor asChild>
+        <View
+          onPointerEnter={() => setHovered(true)}
+          onPointerLeave={() => setHovered(false)}
+          style={[styles.base.projectBlock, { backgroundColor: rowBackground }]}
         >
-          {confirmRemove ? (
-            <View style={styles.base.confirmRemove}>
-              <Text style={labelStyle}>Remove this project?</Text>
-              <View style={styles.base.confirmButtons}>
-                <Button
-                  ref={cancelRemoveButton}
-                  size="sm"
-                  variant="quiet"
-                  {...focusStyles}
-                  onPress={() => {
-                    setSaveFailed(false);
-                    setMenuOpen(false);
-                    setConfirmRemove(false);
-                  }}
-                >
-                  <Text style={labelStyle}>Cancel</Text>
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outlined"
-                  {...focusStyles}
-                  onPress={() => {
-                    if (!onRemove()) setSaveFailed(true);
-                  }}
-                >
-                  <Text style={[labelStyle, appearance.danger]}>Remove</Text>
-                </Button>
-              </View>
-            </View>
-          ) : (
-            <>
-              {actions.map(({ label, Icon: ActionIcon, onPress }) => (
-                <Button
-                  key={label}
-                  size="sm"
-                  variant="quiet"
-                  disabled={!onPress}
-                  style={[
-                    styles.base.action,
-                    !onPress && styles.base.unavailableAction,
-                  ]}
-                  {...focusStyles}
-                  onPress={onPress}
-                >
-                  <ActionIcon size={16} color={colors.muted} />
-                  <Text style={labelStyle}>{label}</Text>
-                </Button>
-              ))}
-              <View
-                style={[styles.base.actionDivider, appearance.actionDivider]}
-              />
+          <View
+            style={[
+              styles.base.projectRow,
+              hasTags && styles.base.projectRowWithTags,
+            ]}
+          >
+            <Button
+              size="sm"
+              variant="quiet"
+              disabled={disabled}
+              aria-current={selected ? 'true' : undefined}
+              style={[
+                styles.base.projectLink,
+                hasTags && styles.base.projectControlWithTags,
+              ]}
+              {...focusStyles}
+              onPress={onSelect}
+            >
+              <Icon size={projectIconSize} strokeWidth={1.7} color={clay} />
+              <Text
+                numberOfLines={1}
+                style={[styles.base.projectName, labelStyle]}
+              >
+                {project.title}
+              </Text>
+            </Button>
+            {project.pinned && (
+              <Pin size={12} color={colors.selectionInk} aria-hidden />
+            )}
+            <Popover.Trigger asChild>
               <Button
+                id={projectActionsId(project.id)}
+                aria-label={`Actions for ${project.title}`}
+                disabled={disabled}
                 size="sm"
                 variant="quiet"
-                style={styles.base.action}
+                opacity={hovered || actionsFocused || menuOpen ? 1 : 0}
+                onFocus={() => setActionsFocused(true)}
+                onBlur={() => setActionsFocused(false)}
+                style={[
+                  styles.base.draftButton,
+                  hasTags && styles.base.projectControlWithTags,
+                ]}
+                {...focusStyles}
+              >
+                <Ellipsis size={17} color={colors.muted} />
+              </Button>
+            </Popover.Trigger>
+          </View>
+          <ProjectTags
+            tags={tags}
+            activeTag={activeTag}
+            theme={theme}
+            rowBackground={rowBackground}
+            fontsLoaded={fontsLoaded}
+            disabled={disabled}
+            onToggle={onToggleTag}
+            onRemove={onRemoveTag}
+          />
+        </View>
+      </Popover.Anchor>
+      <Popover.Content
+        onCloseAutoFocus={(event) => {
+          if (openingTag.current) event.cancel();
+        }}
+        style={[styles.base.actionMenu, appearance.iconMenu]}
+      >
+        {confirmRemove ? (
+          <View style={styles.base.confirmRemove}>
+            <Text style={labelStyle}>Remove this project?</Text>
+            <View style={styles.base.confirmButtons}>
+              <Button
+                ref={cancelRemoveButton}
+                size="sm"
+                variant="quiet"
                 {...focusStyles}
                 onPress={() => {
                   setSaveFailed(false);
-                  setConfirmRemove(true);
+                  setMenuOpen(false);
+                  setConfirmRemove(false);
                 }}
               >
-                <Trash2 size={16} color={appearance.danger.color} />
-                <Text style={[labelStyle, appearance.danger]}>
-                  Remove project
-                </Text>
+                <Text style={labelStyle}>Cancel</Text>
               </Button>
-            </>
-          )}
-          {saveFailed && (
-            <Text
-              accessibilityLiveRegion="polite"
-              style={[styles.base.saveError, appearance.danger]}
+              <Button
+                size="sm"
+                variant="outlined"
+                {...focusStyles}
+                onPress={() => {
+                  if (!onRemove()) setSaveFailed(true);
+                }}
+              >
+                <Text style={[labelStyle, appearance.danger]}>Remove</Text>
+              </Button>
+            </View>
+          </View>
+        ) : (
+          <>
+            {actions.map(({ label, Icon: ActionIcon, onPress }) => (
+              <Button
+                key={label}
+                size="sm"
+                variant="quiet"
+                disabled={!onPress}
+                style={[
+                  styles.base.action,
+                  !onPress && styles.base.unavailableAction,
+                ]}
+                {...focusStyles}
+                onPress={onPress}
+              >
+                <ActionIcon size={16} color={colors.muted} />
+                <Text style={labelStyle}>{label}</Text>
+              </Button>
+            ))}
+            <View
+              style={[styles.base.actionDivider, appearance.actionDivider]}
+            />
+            <Button
+              size="sm"
+              variant="quiet"
+              style={styles.base.action}
+              {...focusStyles}
+              onPress={() => {
+                setSaveFailed(false);
+                setConfirmRemove(true);
+              }}
             >
-              Couldn’t save changes. Try again.
-            </Text>
-          )}
-        </Popover.Content>
-      </Popover>
-    </View>
+              <Trash2 size={16} color={appearance.danger.color} />
+              <Text style={[labelStyle, appearance.danger]}>
+                Remove project
+              </Text>
+            </Button>
+          </>
+        )}
+        {saveFailed && (
+          <Text
+            accessibilityLiveRegion="polite"
+            style={[styles.base.saveError, appearance.danger]}
+          >
+            Couldn’t save changes. Try again.
+          </Text>
+        )}
+      </Popover.Content>
+    </Popover>
   );
 }

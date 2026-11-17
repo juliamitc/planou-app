@@ -4,13 +4,13 @@ export type ProjectTag = {
 };
 
 export const tagColors = [
-  { name: 'Green', value: '#7CAF90' },
-  { name: 'Red', value: '#D47C82' },
-  { name: 'Yellow', value: '#D4B760' },
-  { name: 'Blue', value: '#7DA9D8' },
-  { name: 'Purple', value: '#A190CC' },
-  { name: 'Pink', value: '#CE8EB4' },
-  { name: 'Gray', value: '#92949B' },
+  { name: 'Green', value: '#B8E6C8' },
+  { name: 'Red', value: '#F5B7AE' },
+  { name: 'Yellow', value: '#F8E7A4' },
+  { name: 'Blue', value: '#B9DCF6' },
+  { name: 'Purple', value: '#D8C6F2' },
+  { name: 'Pink', value: '#F1C3DC' },
+  { name: 'Gray', value: '#DCE2EB' },
 ];
 
 export function tagKey(name: string) {

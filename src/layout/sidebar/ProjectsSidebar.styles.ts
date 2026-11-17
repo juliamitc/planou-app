@@ -7,6 +7,12 @@ import { sidebarInset } from '../layoutDimensions';
 export const sidebarButtonSize = 44;
 const panelBorder = 1;
 const panelPadding = 10;
+const projectListInset = 2;
+const projectRowInset = 9;
+const projectIconGap = 8;
+export const projectIconSize = 19;
+export const projectTitleInset =
+  projectRowInset + projectIconSize + projectIconGap;
 export const sidebarToggleInset =
   panelBorder + panelPadding + sidebarButtonSize * 2;
 
@@ -76,7 +82,7 @@ export const styles = {
       flex: 1,
       fontSize: 16,
       lineHeight: 22,
-      marginStart: 9,
+      marginStart: projectListInset + projectRowInset,
       marginEnd: sidebarButtonSize,
     },
     titleFont: { fontFamily: fontFamilies.heading },
@@ -141,41 +147,48 @@ export const styles = {
       borderRadius: 11,
     },
     saveError: { fontSize: 12, lineHeight: 17, paddingHorizontal: 4 },
-    projectList: { flex: 1, marginTop: 7 },
-    projectListContent: { gap: 3, paddingHorizontal: 2, paddingVertical: 3 },
+    projectList: { flex: 1, marginTop: 8 },
+    projectListContent: {
+      gap: 6,
+      paddingHorizontal: projectListInset,
+      paddingVertical: 4,
+    },
+    projectBlock: { borderRadius: 8 },
     projectRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingRight: 3,
-      borderRadius: 8,
+      paddingRight: 4,
     },
+    projectRowWithTags: { paddingTop: 5 },
+    projectControlWithTags: { height: 30, minHeight: 30 },
     projectLink: {
       flex: 1,
       minWidth: 0,
-      minHeight: 38,
-      paddingHorizontal: 9,
-      gap: 8,
+      minHeight: 40,
+      paddingHorizontal: projectRowInset,
+      gap: projectIconGap,
       justifyContent: 'flex-start',
       borderRadius: 8,
+      borderWidth: 0,
     },
-    projectName: { flex: 1, fontSize: 14, lineHeight: 20 },
+    projectName: { flex: 1, fontSize: 15, lineHeight: 21 },
     actionMenu: {
       width: 198,
-      gap: 2,
-      padding: 5,
+      gap: 0,
+      padding: 6,
       borderWidth: 1,
       borderRadius: 11,
       alignItems: 'stretch',
     },
     action: {
       minHeight: 36,
-      paddingHorizontal: 8,
-      gap: 9,
+      paddingHorizontal: 10,
+      gap: 10,
       justifyContent: 'flex-start',
       borderRadius: 7,
     },
     unavailableAction: { opacity: 0.48 },
-    actionDivider: { height: 1, marginHorizontal: 4, marginVertical: 4 },
+    actionDivider: { height: 1, marginHorizontal: 5, marginVertical: 5 },
     confirmRemove: { gap: 8, padding: 8 },
     confirmButtons: {
       flexDirection: 'row',
