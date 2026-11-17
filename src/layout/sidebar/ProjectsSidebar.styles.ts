@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { layoutColors, type LayoutTheme } from '../../theme/colors';
+import { clay, layoutColors, type LayoutTheme } from '../../theme/colors';
 import { fontFamilies } from '../../theme/fonts';
 import { sidebarInset } from '../layoutDimensions';
 
@@ -25,8 +25,18 @@ function appearance(theme: LayoutTheme) {
       boxShadow: `0 3px 10px ${colors.shadow}`,
     },
     header: { borderColor: colors.border },
-    addIcon: { backgroundColor: colors.selection },
     title: { color: colors.text },
+    text: { color: colors.text },
+    selectedRow: { backgroundColor: colors.selection },
+    draftRow: { backgroundColor: colors.surface, borderColor: colors.border },
+    draftFocused: { borderColor: colors.selectionInk },
+    danger: { color: theme === 'dark' ? '#f2a79b' : '#a53930' },
+    actionDivider: { backgroundColor: colors.border },
+    iconMenu: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      boxShadow: `0 4px 12px ${colors.shadow}`,
+    },
   });
 }
 
@@ -77,13 +87,100 @@ export const styles = {
       borderRadius: 10,
     },
     addButton: { paddingHorizontal: 0 },
-    addButtonDisabled: { opacity: 0.65 },
     addIcon: {
       width: 31,
       height: 31,
       borderRadius: 9,
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundColor: clay,
+    },
+    bodyFont: { fontFamily: fontFamilies.body },
+    draft: { marginTop: 9, gap: 6 },
+    draftRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      padding: 3,
+      borderWidth: 1,
+      borderRadius: 10,
+    },
+    draftInput: {
+      flex: 1,
+      minWidth: 0,
+      paddingHorizontal: 3,
+      paddingVertical: 2,
+      fontSize: 14,
+      outlineStyle: 'solid',
+      outlineWidth: 0,
+    },
+    draftButton: {
+      height: 32,
+      width: 32,
+      minWidth: 32,
+      minHeight: 32,
+      padding: 0,
+      borderRadius: 7,
+    },
+    iconPicker: {
+      height: 32,
+      minHeight: 32,
+      minWidth: 36,
+      gap: 2,
+      paddingHorizontal: 4,
+      borderRadius: 7,
+    },
+    iconMenu: {
+      alignSelf: 'flex-start',
+      width: 190,
+      padding: 6,
+      gap: 4,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      borderWidth: 1,
+      borderRadius: 11,
+    },
+    saveError: { fontSize: 12, lineHeight: 17, paddingHorizontal: 4 },
+    projectList: { flex: 1, marginTop: 7 },
+    projectListContent: { gap: 3, paddingHorizontal: 2, paddingVertical: 3 },
+    projectRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingRight: 3,
+      borderRadius: 8,
+    },
+    projectLink: {
+      flex: 1,
+      minWidth: 0,
+      minHeight: 38,
+      paddingHorizontal: 9,
+      gap: 8,
+      justifyContent: 'flex-start',
+      borderRadius: 8,
+    },
+    projectName: { flex: 1, fontSize: 14, lineHeight: 20 },
+    actionMenu: {
+      width: 198,
+      gap: 2,
+      padding: 5,
+      borderWidth: 1,
+      borderRadius: 11,
+      alignItems: 'stretch',
+    },
+    action: {
+      minHeight: 36,
+      paddingHorizontal: 8,
+      gap: 9,
+      justifyContent: 'flex-start',
+      borderRadius: 7,
+    },
+    unavailableAction: { opacity: 0.48 },
+    actionDivider: { height: 1, marginHorizontal: 4, marginVertical: 4 },
+    confirmRemove: { gap: 8, padding: 8 },
+    confirmButtons: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 5,
     },
   }),
 };

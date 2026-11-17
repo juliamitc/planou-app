@@ -10,6 +10,12 @@ function appearance(theme: LayoutTheme) {
   return StyleSheet.create({
     screen: { backgroundColor: colors.background },
     label: { color: colors.text },
+    muted: { color: colors.muted },
+    newProjectButton: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+    },
+    newProjectLabel: { color: colors.selectionInk },
     menu: { backgroundColor: colors.surface, borderColor: colors.border },
     themeTrigger: {
       backgroundColor: colors.surface,
@@ -65,5 +71,18 @@ export const styles = {
     optionLabel: { flex: 1, fontSize: 14, lineHeight: 20 },
     optionFont: { fontFamily: fontFamilies.body },
     content: { flex: 1, minWidth: 0 },
+    emptyProjects: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 16,
+      padding: 24,
+    },
+    projectOverview: { paddingHorizontal: 32, paddingVertical: 24, gap: 12 },
+    projectHeading: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    pageTitle: { flexShrink: 1, fontSize: 27, lineHeight: 34 },
+    pageCopy: { fontSize: 14, lineHeight: 20 },
+    headingFont: { fontFamily: fontFamilies.heading },
+    newProjectButton: { minHeight: 40, borderRadius: 9 },
   }),
 };

@@ -1,8 +1,14 @@
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { Check, ChevronDown, Monitor, Moon, Sun } from 'lucide-react-native';
-import { useState, type ReactNode } from 'react';
-import { Text, useColorScheme, useWindowDimensions, View } from 'react-native';
+import { useState } from 'react';
+import {
+  Platform,
+  Text,
+  useColorScheme,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -11,6 +17,14 @@ import { Button } from 'tamagui/button';
 import { Popover } from 'tamagui/popover';
 import { TamaguiProvider } from 'tamagui/provider';
 
+import { hasTag, tagKey, type ProjectTag } from '../projects/projectTags';
+import {
+  loadProjects,
+  saveProjectChanges,
+  type Project,
+  type ProjectChange,
+  type ProjectDetails,
+} from '../projects/projects';
 import {
   buttonFocusStyles,
   layoutColors,
@@ -19,6 +33,7 @@ import {
 import { appFonts } from '../theme/fonts';
 import { tamaguiConfig } from '../theme/tamagui.config';
 import { styles } from './AppLayout.styles';
+import { ProjectContent } from './ProjectContent';
 import { desktopSidebarWidth, sidebarInset } from './layoutDimensions';
 import { ProjectsSidebar } from './sidebar/ProjectsSidebar';
 
@@ -30,13 +45,13 @@ const themes = [
 
 type ThemePreference = (typeof themes)[number]['value'];
 
-type AppLayoutProps = {
-  children?: ReactNode;
-  onAddProject?: () => void;
-};
-
-export function AppLayout({ children, onAddProject }: AppLayoutProps) {
+export function AppLayout() {
   const [fontsLoaded] = useFonts(appFonts);
+  const [projects, setProjects] = useState(loadProjects);
+  const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const [draft, setDraft] = useState<'new' | Project>();
+  const [tagProjectId, setTagProjectId] = useState<string>();
+  const [activeTag, setActiveTag] = useState<string>();
   const [preference, setPreference] = useState<ThemePreference>('automatic');
   const [sidebarOverride, setSidebarOverride] = useState<boolean>();
   const { width } = useWindowDimensions();
@@ -60,6 +75,104 @@ export function AppLayout({ children, onAddProject }: AppLayoutProps) {
     themes.find((option) => option.value === preference) ?? themes[0];
   const ThemeIcon = activeOption.Icon;
   const appearance = styles[theme];
+  const shownProjects = activeTag
+    ? projects.filter((project) => hasTag(project.tags, activeTag))
+    : projects;
+  const selectedProject = shownProjects.find(
+    (project) => project.id === selectedProjectId,
+  );
+
+  function startProject() {
+    if (tagProjectId) return;
+    setSidebarOverride(false);
+    setDraft((current) => current ?? 'new');
+  }
+
+  function changeProjects(change: ProjectChange) {
+    try {
+      const nextProjects =
+        Platform.OS === 'web' ? saveProjectChanges(change) : change(projects);
+      setProjects(nextProjects);
+      if (
+        activeTag &&
+        !nextProjects.some((project) => hasTag(project.tags, activeTag))
+      ) {
+        setActiveTag(undefined);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function addTag(id: string, tag: ProjectTag) {
+    const key = tagKey(tag.name);
+    return changeProjects((current) => {
+      const existing = current
+        .flatMap((project) => project.tags ?? [])
+        .find((item) => tagKey(item.name) === key);
+      return current.map((project) =>
+        project.id === id && !hasTag(project.tags, key)
+          ? { ...project, tags: [...(project.tags ?? []), existing ?? tag] }
+          : project,
+      );
+    });
+  }
+
+  function removeTag(id: string, name: string) {
+    const key = tagKey(name);
+    return changeProjects((current) =>
+      current.map((project) =>
+        project.id === id
+          ? {
+              ...project,
+              tags: project.tags?.filter((tag) => tagKey(tag.name) !== key),
+            }
+          : project,
+      ),
+    );
+  }
+
+  function saveProject(details: ProjectDetails) {
+    if (!draft) return false;
+
+    if (draft !== 'new') {
+      return changeProjects((current) =>
+        current.map((project) =>
+          project.id === draft.id ? { ...project, ...details } : project,
+        ),
+      );
+    }
+
+    const project = {
+      ...details,
+      id:
+        globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    };
+    const saved = changeProjects((current) => [...current, project]);
+    if (saved) {
+      setActiveTag(undefined);
+      setSelectedProjectId(project.id);
+    }
+    return saved;
+  }
+
+  function togglePinnedProject(id: string) {
+    return changeProjects((current) =>
+      current.map((project) =>
+        project.id === id ? { ...project, pinned: !project.pinned } : project,
+      ),
+    );
+  }
+
+  function removeProject(id: string) {
+    const removed = changeProjects((current) =>
+      current.filter((project) => project.id !== id),
+    );
+    if (removed && selectedProjectId === id) setSelectedProjectId(undefined);
+    return removed;
+  }
 
   return (
     <TamaguiProvider config={tamaguiConfig} defaultTheme={theme}>
@@ -132,11 +245,50 @@ export function AppLayout({ children, onAddProject }: AppLayoutProps) {
             width={sidebarWidth}
             collapsed={collapsed}
             fontsLoaded={fontsLoaded}
+            projects={shownProjects}
+            knownTags={projects.flatMap((project) => project.tags ?? [])}
+            activeTag={activeTag}
+            tagProjectId={tagProjectId}
+            selectedProjectId={selectedProjectId}
+            draft={draft}
             onToggle={() => setSidebarOverride(!collapsed)}
-            onAddProject={onAddProject}
+            onAddProject={startProject}
+            onSaveProject={saveProject}
+            onEditProject={(project) => {
+              if (!tagProjectId) setDraft((current) => current ?? project);
+            }}
+            onCloseDraft={() => setDraft(undefined)}
+            onStartTag={(id) => {
+              if (!draft) setTagProjectId((current) => current ?? id);
+            }}
+            onCloseTag={() => setTagProjectId(undefined)}
+            onSaveTag={addTag}
+            onRemoveTag={removeTag}
+            onToggleTag={(name) => {
+              const key = tagKey(name);
+              setActiveTag((current) => (current === key ? undefined : key));
+              setTagProjectId(undefined);
+            }}
+            onTogglePinned={togglePinnedProject}
+            onRemoveProject={removeProject}
+            onSelectProject={(id) => {
+              setSelectedProjectId(id);
+              if (compact) setSidebarOverride(true);
+            }}
           />
           {(!compact || collapsed) && (
-            <View style={styles.base.content}>{children}</View>
+            <View style={styles.base.content}>
+              <ProjectContent
+                project={selectedProject}
+                hasProjects={projects.length > 0}
+                addingProject={
+                  draft !== undefined || tagProjectId !== undefined
+                }
+                theme={theme}
+                fontsLoaded={fontsLoaded}
+                onAddProject={startProject}
+              />
+            </View>
           )}
         </View>
         <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
