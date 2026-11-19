@@ -40,6 +40,7 @@ type ProjectsSidebarProps = {
   draft?: 'new' | Project;
   onToggle: () => void;
   onAddProject: () => void;
+  onAddItem: (id: string) => void;
   onSaveProject: (details: ProjectDetails) => boolean;
   onEditProject: (project: Project) => void;
   onTogglePinned: (id: string) => boolean;
@@ -74,6 +75,7 @@ export function ProjectsSidebar({
   draft,
   onToggle,
   onAddProject,
+  onAddItem,
   onSaveProject,
   onEditProject,
   onTogglePinned,
@@ -264,6 +266,7 @@ export function ProjectsSidebar({
                   onSelect={() => onSelectProject(project.id)}
                   onEdit={() => onEditProject(project)}
                   onAddTag={() => onStartTag(project.id)}
+                  onAddItem={() => onAddItem(project.id)}
                   onToggleTag={onToggleTag}
                   onRemoveTag={(name) => onRemoveTag(project.id, name)}
                   onTogglePinned={() => onTogglePinned(project.id)}

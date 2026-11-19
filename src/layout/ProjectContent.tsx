@@ -1,7 +1,9 @@
-import { Text, View } from 'react-native';
+import { Plus } from 'lucide-react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Button } from 'tamagui/button';
 
 import { projectIcons } from '../projects/projectIcons';
+import { boardFormats, itemTypes } from '../projects/projectItems';
 import type { Project } from '../projects/projects';
 import { buttonFocusStyles, clay, type LayoutTheme } from '../theme/colors';
 import { styles } from './AppLayout.styles';
@@ -13,6 +15,7 @@ type ProjectContentProps = {
   theme: LayoutTheme;
   fontsLoaded: boolean;
   onAddProject: () => void;
+  onAddItem: () => void;
 };
 
 export function ProjectContent({
@@ -22,6 +25,7 @@ export function ProjectContent({
   theme,
   fontsLoaded,
   onAddProject,
+  onAddItem,
 }: ProjectContentProps) {
   const appearance = styles[theme];
   const headingStyle = [
@@ -32,25 +36,81 @@ export function ProjectContent({
 
   if (project) {
     const { Icon } = projectIcons[project.icon];
-
     return (
-      <View style={styles.base.projectOverview}>
+      <ScrollView contentContainerStyle={styles.base.projectOverview}>
         <View style={styles.base.projectHeading}>
           <Icon size={26} strokeWidth={1.7} color={clay} />
           <Text accessibilityRole="header" style={headingStyle}>
             {project.title}
           </Text>
         </View>
-        <Text
-          style={[
-            styles.base.pageCopy,
-            appearance.muted,
-            fontsLoaded && styles.base.optionFont,
-          ]}
+        <Button
+          id="add-project-item"
+          size="sm"
+          variant="outlined"
+          disabled={addingProject}
+          {...buttonFocusStyles(theme)}
+          onPress={onAddItem}
+          style={[styles.base.addItemButton, appearance.newProjectButton]}
         >
-          This project is empty.
-        </Text>
-      </View>
+          <Plus size={16} color={clay} />
+          <Text
+            style={[
+              appearance.newProjectLabel,
+              fontsLoaded && styles.base.headingFont,
+            ]}
+          >
+            Add item
+          </Text>
+        </Button>
+        {project.items?.length ? (
+          <View style={styles.base.itemList}>
+            {project.items.map((item) => {
+              const { Icon: ItemIcon } = itemTypes[item.type];
+              const label = item.boardFormat
+                ? boardFormats[item.boardFormat]
+                : itemTypes[item.type].label;
+              return (
+                <View
+                  key={item.id}
+                  style={[styles.base.itemRow, appearance.itemRow]}
+                >
+                  <ItemIcon size={20} strokeWidth={1.7} color={clay} />
+                  <Text
+                    numberOfLines={2}
+                    style={[
+                      styles.base.itemTitle,
+                      appearance.label,
+                      fontsLoaded && styles.base.optionFont,
+                    ]}
+                  >
+                    {item.title}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.base.itemType,
+                      appearance.muted,
+                      fontsLoaded && styles.base.optionFont,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.base.pageCopy,
+              appearance.muted,
+              fontsLoaded && styles.base.optionFont,
+            ]}
+          >
+            This project is empty.
+          </Text>
+        )}
+      </ScrollView>
     );
   }
 

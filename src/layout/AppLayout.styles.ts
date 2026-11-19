@@ -11,6 +11,7 @@ function appearance(theme: LayoutTheme) {
     screen: { backgroundColor: colors.background },
     label: { color: colors.text },
     muted: { color: colors.muted },
+    itemRow: { backgroundColor: colors.surface, borderColor: colors.border },
     newProjectButton: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
@@ -84,5 +85,22 @@ export const styles = {
     pageCopy: { fontSize: 14, lineHeight: 20 },
     headingFont: { fontFamily: fontFamilies.heading },
     newProjectButton: { minHeight: 40, borderRadius: 9 },
+    addItemButton: {
+      alignSelf: 'flex-start',
+      minHeight: 38,
+      borderRadius: 9,
+      gap: 7,
+    },
+    itemList: { gap: 8, marginTop: 8 },
+    itemRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      padding: 14,
+      borderWidth: 1,
+      borderRadius: 10,
+    },
+    itemTitle: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: 20 },
+    itemType: { fontSize: 12 },
   }),
 };

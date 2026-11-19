@@ -33,6 +33,7 @@ type ProjectRowProps = {
   onSelect: () => void;
   onEdit: () => void;
   onAddTag: () => void;
+  onAddItem: () => void;
   onToggleTag: (name: string) => void;
   onRemoveTag: (name: string) => boolean;
   onTogglePinned: () => boolean;
@@ -53,6 +54,7 @@ export function ProjectRow({
   onSelect,
   onEdit,
   onAddTag,
+  onAddItem,
   onToggleTag,
   onRemoveTag,
   onTogglePinned,
@@ -64,7 +66,7 @@ export function ProjectRow({
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [saveFailed, setSaveFailed] = useState(false);
   const cancelRemoveButton = useRef<ComponentRef<typeof Button>>(null);
-  const openingTag = useRef(false);
+  const openingForm = useRef(false);
   const { Icon } = projectIcons[project.icon];
   const tags = project.tags ?? [];
   const hasTags = tags.length > 0;
@@ -91,12 +93,20 @@ export function ProjectRow({
         else setSaveFailed(true);
       },
     },
-    { label: 'Add item', Icon: Plus },
+    {
+      label: 'Add item',
+      Icon: Plus,
+      onPress: () => {
+        openingForm.current = true;
+        setMenuOpen(false);
+        onAddItem();
+      },
+    },
     {
       label: 'Add tag',
       Icon: Tag,
       onPress: () => {
-        openingTag.current = true;
+        openingForm.current = true;
         setMenuOpen(false);
         onAddTag();
       },
@@ -117,7 +127,7 @@ export function ProjectRow({
       offset={6}
       open={menuOpen && !disabled}
       onOpenChange={(open) => {
-        if (open) openingTag.current = false;
+        if (open) openingForm.current = false;
         setConfirmRemove(false);
         setSaveFailed(false);
         setMenuOpen(open);
@@ -192,7 +202,7 @@ export function ProjectRow({
       </Popover.Anchor>
       <Popover.Content
         onCloseAutoFocus={(event) => {
-          if (openingTag.current) event.cancel();
+          if (openingForm.current) event.cancel();
         }}
         style={[styles.base.actionMenu, appearance.iconMenu]}
       >

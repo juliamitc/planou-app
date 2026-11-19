@@ -1,4 +1,5 @@
 import { projectIcons, type ProjectIcon } from './projectIcons';
+import { isProjectItem, type ProjectItem } from './projectItems';
 import { isTagColor, type ProjectTag } from './projectTags';
 
 export type ProjectDetails = {
@@ -10,6 +11,7 @@ export type Project = ProjectDetails & {
   id: string;
   pinned?: boolean;
   tags?: ProjectTag[];
+  items?: ProjectItem[];
 };
 export type ProjectChange = (projects: Project[]) => Project[];
 
@@ -35,6 +37,9 @@ function readProjects(): Project[] {
 
   return projects.filter(isProject).map((project) => ({
     ...project,
+    items: Array.isArray(project.items)
+      ? project.items.filter(isProjectItem)
+      : [],
     tags: Array.isArray(project.tags)
       ? project.tags.filter(
           (tag) =>

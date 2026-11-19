@@ -17,6 +17,8 @@ import { Button } from 'tamagui/button';
 import { Popover } from 'tamagui/popover';
 import { TamaguiProvider } from 'tamagui/provider';
 
+import { AddItemDialog } from '../projects/AddItemDialog';
+import type { ItemDetails } from '../projects/projectItems';
 import { hasTag, tagKey, type ProjectTag } from '../projects/projectTags';
 import {
   loadProjects,
@@ -35,6 +37,7 @@ import { tamaguiConfig } from '../theme/tamagui.config';
 import { styles } from './AppLayout.styles';
 import { ProjectContent } from './ProjectContent';
 import { desktopSidebarWidth, sidebarInset } from './layoutDimensions';
+import { projectActionsId } from './sidebar/ProjectRow';
 import { ProjectsSidebar } from './sidebar/ProjectsSidebar';
 
 const themes = [
@@ -52,6 +55,10 @@ export function AppLayout() {
   const [draft, setDraft] = useState<'new' | Project>();
   const [tagProjectId, setTagProjectId] = useState<string>();
   const [activeTag, setActiveTag] = useState<string>();
+  const [itemDialog, setItemDialog] = useState<{
+    projectId: string;
+    returnFocusId: string;
+  }>();
   const [preference, setPreference] = useState<ThemePreference>('automatic');
   const [sidebarOverride, setSidebarOverride] = useState<boolean>();
   const { width } = useWindowDimensions();
@@ -81,6 +88,39 @@ export function AppLayout() {
   const selectedProject = shownProjects.find(
     (project) => project.id === selectedProjectId,
   );
+  const itemProject = projects.find(
+    (project) => project.id === itemDialog?.projectId,
+  );
+
+  function startItem(projectId: string, returnFocusId: string) {
+    if (draft || tagProjectId) return;
+    setItemDialog({ projectId, returnFocusId });
+  }
+
+  function saveItem(details: ItemDetails) {
+    if (!itemDialog) return false;
+    const item = {
+      ...details,
+      id:
+        globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    };
+    const saved = changeProjects((current) => {
+      if (!current.some((project) => project.id === itemDialog.projectId)) {
+        throw new Error('The project no longer exists.');
+      }
+      return current.map((project) =>
+        project.id === itemDialog.projectId
+          ? { ...project, items: [...(project.items ?? []), item] }
+          : project,
+      );
+    });
+    if (saved) {
+      setSelectedProjectId(itemDialog.projectId);
+      if (compact) setSidebarOverride(true);
+    }
+    return saved;
+  }
 
   function startProject() {
     if (tagProjectId) return;
@@ -253,6 +293,7 @@ export function AppLayout() {
             draft={draft}
             onToggle={() => setSidebarOverride(!collapsed)}
             onAddProject={startProject}
+            onAddItem={(id) => startItem(id, projectActionsId(id))}
             onSaveProject={saveProject}
             onEditProject={(project) => {
               if (!tagProjectId) setDraft((current) => current ?? project);
@@ -287,10 +328,25 @@ export function AppLayout() {
                 theme={theme}
                 fontsLoaded={fontsLoaded}
                 onAddProject={startProject}
+                onAddItem={() => {
+                  if (selectedProject)
+                    startItem(selectedProject.id, 'add-project-item');
+                }}
               />
             </View>
           )}
         </View>
+        {itemDialog && itemProject && (
+          <AddItemDialog
+            key={itemDialog.projectId}
+            projectTitle={itemProject.title}
+            returnFocusId={itemDialog.returnFocusId}
+            theme={theme}
+            fontsLoaded={fontsLoaded}
+            onSave={saveItem}
+            onClose={() => setItemDialog(undefined)}
+          />
+        )}
         <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       </SafeAreaView>
     </TamaguiProvider>
