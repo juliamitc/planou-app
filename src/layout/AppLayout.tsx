@@ -18,6 +18,7 @@ import { Popover } from 'tamagui/popover';
 import { TamaguiProvider } from 'tamagui/provider';
 
 import { AddItemDialog } from '../projects/AddItemDialog';
+import type { CalendarEvent } from '../projects/calendar/calendarEvents';
 import type { ItemDetails } from '../projects/projectItems';
 import { hasTag, tagKey, type ProjectTag } from '../projects/projectTags';
 import {
@@ -52,6 +53,7 @@ export function AppLayout() {
   const [fontsLoaded] = useFonts(appFonts);
   const [projects, setProjects] = useState(loadProjects);
   const [selectedProjectId, setSelectedProjectId] = useState<string>();
+  const [openBoardId, setOpenBoardId] = useState<string>();
   const [draft, setDraft] = useState<'new' | Project>();
   const [tagProjectId, setTagProjectId] = useState<string>();
   const [activeTag, setActiveTag] = useState<string>();
@@ -92,6 +94,11 @@ export function AppLayout() {
     (project) => project.id === itemDialog?.projectId,
   );
 
+  function selectProject(id?: string) {
+    setSelectedProjectId(id);
+    setOpenBoardId(undefined);
+  }
+
   function startItem(projectId: string, returnFocusId: string) {
     if (draft || tagProjectId) return;
     setItemDialog({ projectId, returnFocusId });
@@ -116,7 +123,7 @@ export function AppLayout() {
       );
     });
     if (saved) {
-      setSelectedProjectId(itemDialog.projectId);
+      selectProject(itemDialog.projectId);
       if (compact) setSidebarOverride(true);
     }
     return saved;
@@ -143,6 +150,32 @@ export function AppLayout() {
     } catch {
       return false;
     }
+  }
+
+  function changeCalendarEvents(
+    projectId: string,
+    boardId: string,
+    change: (events: CalendarEvent[]) => CalendarEvent[],
+  ) {
+    return changeProjects((current) => {
+      const project = current.find((item) => item.id === projectId);
+      const board = project?.items?.find(
+        (item) => item.id === boardId && item.boardFormat === 'calendar',
+      );
+      if (!board) throw new Error('The calendar no longer exists.');
+
+      const events = change(board.events ?? []);
+      return current.map((item) =>
+        item.id === projectId
+          ? {
+              ...item,
+              items: item.items?.map((entry) =>
+                entry.id === boardId ? { ...entry, events } : entry,
+              ),
+            }
+          : item,
+      );
+    });
   }
 
   function addTag(id: string, tag: ProjectTag) {
@@ -193,7 +226,7 @@ export function AppLayout() {
     const saved = changeProjects((current) => [...current, project]);
     if (saved) {
       setActiveTag(undefined);
-      setSelectedProjectId(project.id);
+      selectProject(project.id);
     }
     return saved;
   }
@@ -210,7 +243,7 @@ export function AppLayout() {
     const removed = changeProjects((current) =>
       current.filter((project) => project.id !== id),
     );
-    if (removed && selectedProjectId === id) setSelectedProjectId(undefined);
+    if (removed && selectedProjectId === id) selectProject();
     return removed;
   }
 
@@ -313,7 +346,7 @@ export function AppLayout() {
             onTogglePinned={togglePinnedProject}
             onRemoveProject={removeProject}
             onSelectProject={(id) => {
-              setSelectedProjectId(id);
+              selectProject(id);
               if (compact) setSidebarOverride(true);
             }}
           />
@@ -321,6 +354,8 @@ export function AppLayout() {
             <View style={styles.base.content}>
               <ProjectContent
                 project={selectedProject}
+                openBoardId={openBoardId}
+                onOpenBoard={setOpenBoardId}
                 hasProjects={projects.length > 0}
                 addingProject={
                   draft !== undefined || tagProjectId !== undefined
@@ -328,6 +363,10 @@ export function AppLayout() {
                 theme={theme}
                 fontsLoaded={fontsLoaded}
                 onAddProject={startProject}
+                onChangeEvents={(boardId, change) =>
+                  !!selectedProject &&
+                  changeCalendarEvents(selectedProject.id, boardId, change)
+                }
                 onAddItem={() => {
                   if (selectedProject)
                     startItem(selectedProject.id, 'add-project-item');

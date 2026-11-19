@@ -1,7 +1,9 @@
-import { Plus } from 'lucide-react-native';
+import { ChevronRight, Plus } from 'lucide-react-native';
 import { ScrollView, Text, View } from 'react-native';
 import { Button } from 'tamagui/button';
 
+import { CalendarBoard } from '../projects/calendar/CalendarBoard';
+import type { CalendarEvent } from '../projects/calendar/calendarEvents';
 import { projectIcons } from '../projects/projectIcons';
 import { boardFormats, itemTypes } from '../projects/projectItems';
 import type { Project } from '../projects/projects';
@@ -10,22 +12,31 @@ import { styles } from './AppLayout.styles';
 
 type ProjectContentProps = {
   project?: Project;
+  openBoardId?: string;
   hasProjects: boolean;
   addingProject: boolean;
   theme: LayoutTheme;
   fontsLoaded: boolean;
   onAddProject: () => void;
   onAddItem: () => void;
+  onOpenBoard: (id?: string) => void;
+  onChangeEvents: (
+    boardId: string,
+    change: (events: CalendarEvent[]) => CalendarEvent[],
+  ) => boolean;
 };
 
 export function ProjectContent({
   project,
+  openBoardId,
   hasProjects,
   addingProject,
   theme,
   fontsLoaded,
   onAddProject,
   onAddItem,
+  onOpenBoard,
+  onChangeEvents,
 }: ProjectContentProps) {
   const appearance = styles[theme];
   const headingStyle = [
@@ -36,6 +47,24 @@ export function ProjectContent({
 
   if (project) {
     const { Icon } = projectIcons[project.icon];
+    const calendar = project.items?.find(
+      (item) => item.id === openBoardId && item.boardFormat === 'calendar',
+    );
+
+    if (calendar) {
+      return (
+        <CalendarBoard
+          key={calendar.id}
+          board={calendar}
+          projectTitle={project.title}
+          theme={theme}
+          fontsLoaded={fontsLoaded}
+          onBack={() => onOpenBoard()}
+          onChangeEvents={(change) => onChangeEvents(calendar.id, change)}
+        />
+      );
+    }
+
     return (
       <ScrollView contentContainerStyle={styles.base.projectOverview}>
         <View style={styles.base.projectHeading}>
@@ -70,11 +99,8 @@ export function ProjectContent({
               const label = item.boardFormat
                 ? boardFormats[item.boardFormat]
                 : itemTypes[item.type].label;
-              return (
-                <View
-                  key={item.id}
-                  style={[styles.base.itemRow, appearance.itemRow]}
-                >
+              const row = (
+                <>
                   <ItemIcon size={20} strokeWidth={1.7} color={clay} />
                   <Text
                     numberOfLines={2}
@@ -95,6 +121,27 @@ export function ProjectContent({
                   >
                     {label}
                   </Text>
+                </>
+              );
+              return item.boardFormat === 'calendar' ? (
+                <Button
+                  key={item.id}
+                  size="sm"
+                  variant="quiet"
+                  aria-label={`Open calendar ${item.title}`}
+                  style={[styles.base.itemRow, appearance.itemRow]}
+                  {...buttonFocusStyles(theme)}
+                  onPress={() => onOpenBoard(item.id)}
+                >
+                  {row}
+                  <ChevronRight size={16} color={clay} />
+                </Button>
+              ) : (
+                <View
+                  key={item.id}
+                  style={[styles.base.itemRow, appearance.itemRow]}
+                >
+                  {row}
                 </View>
               );
             })}

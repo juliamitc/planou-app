@@ -1,3 +1,4 @@
+import { isCalendarEvent } from './calendar/calendarEvents';
 import { projectIcons, type ProjectIcon } from './projectIcons';
 import { isProjectItem, type ProjectItem } from './projectItems';
 import { isTagColor, type ProjectTag } from './projectTags';
@@ -38,7 +39,16 @@ function readProjects(): Project[] {
   return projects.filter(isProject).map((project) => ({
     ...project,
     items: Array.isArray(project.items)
-      ? project.items.filter(isProjectItem)
+      ? project.items.filter(isProjectItem).map((item) =>
+          item.boardFormat === 'calendar'
+            ? {
+                ...item,
+                events: Array.isArray(item.events)
+                  ? item.events.filter(isCalendarEvent)
+                  : [],
+              }
+            : item,
+        )
       : [],
     tags: Array.isArray(project.tags)
       ? project.tags.filter(

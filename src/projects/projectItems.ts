@@ -6,6 +6,8 @@ import {
   NotebookPen,
 } from 'lucide-react-native';
 
+import type { CalendarEvent } from './calendar/calendarEvents';
+
 export const boardFormats = {
   calendar: 'Calendar',
   kanban: 'Kanban',
@@ -49,6 +51,7 @@ export type ItemDetails = {
 };
 export type ProjectItem = ItemDetails & {
   id: string;
+  events?: CalendarEvent[];
 };
 
 export function isProjectItem(value: unknown): value is ProjectItem {
